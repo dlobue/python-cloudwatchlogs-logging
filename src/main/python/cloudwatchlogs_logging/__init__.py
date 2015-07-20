@@ -26,8 +26,6 @@ from boto.logs.exceptions import (DataAlreadyAcceptedException,
                                   ResourceAlreadyExistsException)
 
 
-
-
 class CloudWatchLogsHandler(logging.handlers.BufferingHandler):
     """
     Logging Handler writing to the AWS CloudWatch Logs Service, directly
@@ -57,8 +55,6 @@ class CloudWatchLogsHandler(logging.handlers.BufferingHandler):
     drop_fields = set(["threadName", "thread", "process", "processName",
                        "args", "lineno", "asctime", "relativeCreated", "msecs",
                        "exc_info", "levelno"])
-
-
 
     def __init__(self, region, log_group_name, log_stream_name,
                  flush_interval=60, capacity=1000, flush_level=logging.ERROR,
@@ -120,25 +116,21 @@ class CloudWatchLogsHandler(logging.handlers.BufferingHandler):
                 else:
                     raise
 
-
-
     def _transform_record(self, record):
         timestamp = int(record.created * 1000)
-        record_dict = {k:v for k,v in vars(record).iteritems() if v and k not in self.drop_fields}
+        record_dict = {k: v for k, v in vars(record).iteritems() if v and k not in self.drop_fields}
         message = json.dumps(record_dict)
         event = {"message": message, "timestamp": timestamp}
         return event
-
 
     def emit(self, record):
         if not self.timer:
             self._start_timer()
         super(CloudWatchLogsHandler, self).emit(record)
 
-
     def flush(self):
-        #TODO: add guarantees around number of events in buffer
-        #TODO: ensure we do not go over batch byte size. split batches if necessary.
+        # TODO: add guarantees around number of events in buffer
+        # TODO: ensure we do not go over batch byte size. split batches if necessary.
         with self._timer_lock:
             if self.timer:
                 self.timer.cancel()
@@ -158,7 +150,6 @@ class CloudWatchLogsHandler(logging.handlers.BufferingHandler):
 
         self._start_timer()
 
-
     def _start_timer(self):
         with self._timer_lock:
             if not self.timer:
@@ -166,19 +157,15 @@ class CloudWatchLogsHandler(logging.handlers.BufferingHandler):
                 self.timer.daemon = True
                 self.timer.start()
 
-
     @staticmethod
     def _size(msg):
         return len(msg["message"]) + 26
-
 
     def shouldFlush(self, record):
         """
         Check for buffer full or a record at the flushLevel or higher.
         """
-        #sum(map(self._size, self.buffer))
-        #TODO: determine if it is time to flush based on how close we are to maximum buffer byte size
+        # sum(map(self._size, self.buffer))
+        # TODO: determine if it is time to flush based on how close we are to maximum buffer byte size
         return (len(self.buffer) >= self.capacity) or \
-                (record.levelno >= self.flush_level)
-
-
+               (record.levelno >= self.flush_level)
