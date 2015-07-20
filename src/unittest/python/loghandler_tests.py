@@ -32,7 +32,8 @@ class CloudWatchLogsHandlerTest(unittest.TestCase):
         self.assertTrue(a in b)
 
     def test_cloudwatch_logging(self):
-        cloudwatch_handler = CloudWatchLogsHandler("foo-region", "foo-group", "test")
+        cloudwatch_handler = CloudWatchLogsHandler("foo-region", "foo-group", "test",
+                                                   flush_level=logging.WARN)
         self.logger.addHandler(cloudwatch_handler)
 
         self.logger.debug("aha")
@@ -64,8 +65,7 @@ class CloudWatchLogsHandlerTest(unittest.TestCase):
         self.connection.put_log_events.side_effect = e
 
         handler = CloudWatchLogsHandler("foo-region", "foo-group", "test")
-        self.assertRaises(boto.logs.exceptions.InvalidSequenceTokenException,
-                          handler.put_message, "message", "timestamp")
+        handler.put_events([{"message": "m", "timestamp": "t"}])
 
     def test_invalid_response(self):
         e = boto.logs.exceptions.InvalidSequenceTokenException(500, "completelybroken")
@@ -73,7 +73,7 @@ class CloudWatchLogsHandlerTest(unittest.TestCase):
 
         handler = CloudWatchLogsHandler("foo-region", "foo-group", "test")
         self.assertRaises(boto.logs.exceptions.InvalidSequenceTokenException,
-                          handler.put_message, "message", "timestamp")
+                          handler.put_events, [{"message": "m", "timestamp": "t"}])
 
     def test_response_with_missing_sequence_token(self):
         e = boto.logs.exceptions.InvalidSequenceTokenException(400, "foo")
@@ -82,4 +82,4 @@ class CloudWatchLogsHandlerTest(unittest.TestCase):
 
         handler = CloudWatchLogsHandler("foo-region", "foo-group", "test")
         self.assertRaises(boto.logs.exceptions.InvalidSequenceTokenException,
-                          handler.put_message, "message", "timestamp")
+                          handler.put_events, [{"message": "m", "timestamp": "t"}])
