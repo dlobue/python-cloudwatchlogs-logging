@@ -99,7 +99,7 @@ class CloudWatchLogsHandler(logging.handlers.BufferingHandler):
         self.sequence_token = result.get("nextSequenceToken")
 
     def put_events(self, events):
-        for _ in xrange(self.retries):
+        for _ in range(self.retries):
             try:
                 return self._put_events(events)
             except (DataAlreadyAcceptedException, InvalidSequenceTokenException) as exc:
@@ -110,15 +110,15 @@ class CloudWatchLogsHandler(logging.handlers.BufferingHandler):
                     self.sequence_token = next_sequence_token
                 else:
                     raise
-            except JSONResponseError, e:
-                if e.error_code == u'ThrottlingException':
+            except JSONResponseError as e:
+                if e.error_code == 'ThrottlingException':
                     sleep(1)
                 else:
                     raise
 
     def _transform_record(self, record):
         timestamp = int(record.created * 1000)
-        record_dict = {k: v for k, v in vars(record).iteritems() if v and k not in self.drop_fields}
+        record_dict = {k: v for k, v in vars(record).items() if v and k not in self.drop_fields}
         message = json.dumps(record_dict)
         event = {"message": message, "timestamp": timestamp}
         return event
@@ -140,7 +140,7 @@ class CloudWatchLogsHandler(logging.handlers.BufferingHandler):
 
         records = self.buffer
         self.buffer = []
-        records = map(self._transform_record, records)
+        records = list(map(self._transform_record, records))
 
         self.acquire()
         try:
